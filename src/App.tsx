@@ -97,7 +97,6 @@ const Typing = () => {
   const [wordCount, setWordCount] = useState(0);
   const [countTime, setCountTime] = useState(Date.now());
   const [typed, setTyped] = useState(0);
-  const [lastTyped, setLastTyped] = useState(Date.now());
 
   const [kanaWord, setKanaWord] = useState("");
   const [romaCandidates, setRomaCandidates] = useState<string[]>([]);
@@ -149,7 +148,6 @@ const Typing = () => {
       setPrevRoma(romaCandidates[0]);
       setWordCount(wordCount + 1);
       setTyped(typed + nextTyped.length);
-      setLastTyped(Date.now());
       switch (mode) {
         case "30":
           if (wordCount >= 30) {
@@ -273,7 +271,7 @@ const Typing = () => {
         <p>Mode: {modeName}</p>
         {isTimeBased ? <p>Words: {wordCount}</p> :
           <p>Time: {((Date.now() - countTime) / 1000).toFixed(2)} 秒</p>}
-        <p>Speed: {(typed / (lastTyped - countTime) * 1000).toFixed(2)} タイプ/秒</p>
+        <p>Speed: {(typed / (Date.now() - countTime) * 1000).toFixed(2)} タイプ/秒</p>
         <button onClick={() => {
           setLastDuration(null);
           setLastSpeed(null);
