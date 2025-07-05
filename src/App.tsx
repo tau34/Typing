@@ -150,6 +150,7 @@ const Typing = () => {
     const nextTyped = typedText + key;
     const match = romaCandidates.find((r) => r.startsWith(nextTyped));
     if (!match) return;
+    if (phase !== "typing") return;
 
     setTypedText(nextTyped);
 
