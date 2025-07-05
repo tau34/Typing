@@ -31,7 +31,7 @@ const K2R: Record<string, string[]> = {
   // ら行
   ら: ["ra"], り: ["ri"], る: ["ru"], れ: ["re"], ろ: ["ro"],
   // わ行
-  わ: ["wa"], を: ["wo", "o"], ん: ["n"],
+  わ: ["wa"], を: ["wo", "o"], ん: ["n", "nn"],
 
   // 拗音
   きゃ: ["kya"], きゅ: ["kyu"], きょ: ["kyo"],
@@ -111,7 +111,20 @@ const Typing = () => {
   const pickNewWord = () => {
     const word = words[Math.floor(Math.random() * words.length)];
     setKanaWord(word.display);
-    setRomaCandidates(kanaToRomajis(word.reading));
+
+    let romajis = kanaToRomajis(word.reading);
+    if (word.reading.endsWith("ん")) {
+      romajis = romajis
+        .map((r) => {
+          if (r.endsWith("n") && !r.endsWith("nn")) {
+            return r.slice(0, -1) + "nn";
+          }
+          return r;
+        })
+        .filter((r) => r.endsWith("nn"));
+    }
+
+    setRomaCandidates(romajis);
     setTypedText("");
     setStartTime(Date.now());
   };
