@@ -69,7 +69,19 @@ const kanaToRomajis = (kana: string): string[] => {
 
   if (/^[a-zA-Z]+$/.test(kana[0])) {
     kanaToRomajis(kana.slice(1)).forEach((tail) => {
-      out.push(kana[0] + tail)
+      out.push(kana[0] + tail);
+    });
+    return [...new Set(out)];
+  }
+
+  if (kana[0] === "ん") {
+    kanaToRomajis(kana.slice(1)).forEach((tail) => {
+      if (tail === "" || tail.startsWith("n")) {
+        out.push("nn" + tail);
+      } else {
+        out.push("n" + tail);
+        out.push("nn" + tail);
+      }
     });
     return [...new Set(out)];
   }
