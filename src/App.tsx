@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import words from "./data/words.json";
+import TypingText from "./components/TypingText";
 
 const K2R: Record<string, string[]> = {
   // 母音
@@ -56,6 +57,18 @@ const K2R: Record<string, string[]> = {
 
 type Mode = "30s" | "60s" | "120s" | "30" | "50" | "100";
 
+const timeModeMap: Record<string, number> = {
+  "30s": 30,
+  "60s": 60,
+  "120s": 120,
+};
+
+const countModeMap: Record<string, number> = {
+  "30": 30,
+  "50": 50,
+  "100": 100,
+};
+
 const kanaToRomajis = (kana: string): string[] => {
   if (kana.length === 0) return [""];
   const out: string[] = [];
@@ -67,7 +80,7 @@ const kanaToRomajis = (kana: string): string[] => {
     return [...new Set(out)];
   }
 
-  if (/^[a-zA-Z]+$/.test(kana[0])) {
+  if (/^[a-zA-Z-!?,]+$/.test(kana[0])) {
     kanaToRomajis(kana.slice(1)).forEach((tail) => {
       out.push(kana[0] + tail);
     });
@@ -110,6 +123,11 @@ const Typing = () => {
   const [wordCount, setWordCount] = useState(0);
   const [countTime, setCountTime] = useState(Date.now());
   const [typed, setTyped] = useState(0);
+  const [score, setScore] = useState(0);
+  const [scorePerKey, setScorePerKey] = useState(1);
+  const [combo, setCombo] = useState(0);
+  const scoreRef = useRef(0);
+  const resultScore = useRef(0);
 
   const [kanaWord, setKanaWord] = useState("");
   const [romaCandidates, setRomaCandidates] = useState<string[]>([]);
@@ -153,6 +171,13 @@ const Typing = () => {
     if (phase !== "typing") return;
 
     setTypedText(nextTyped);
+    setCombo(p => p + 1);
+    setScorePerKey(p => p + combo / (1 + combo / 10) / 10);
+    setScore(p => {
+      let pScore = p + scorePerKey;
+      scoreRef.current = pScore;
+      return pScore;
+    });
 
     if (romaCandidates.includes(nextTyped)) {
       const time = (Date.now() - startTime) / 1000;
@@ -184,10 +209,12 @@ const Typing = () => {
   };
 
   const handleTimeLimit = () => {
+    resultScore.current = scoreRef.current;
     setPhase("result");
   }
 
   const handleCountLimit = () => {
+    resultScore.current = scoreRef.current;
     setPhase("result");
   }
 
@@ -242,14 +269,25 @@ const Typing = () => {
 
   const renderRomaji = () => {
     if (romaCandidates.length === 0) return null;
-    const candidate = romaCandidates.find((r) => r.startsWith(typedText)) || romaCandidates[0];
-    const done = typedText.length;
+    let remainingTime: (() => number) | undefined;
+    let remainingCount: (() => number) | undefined;
+
+    if (mode in timeModeMap) {
+      const limit = timeModeMap[mode];
+      remainingTime = () => limit - (Date.now() - countTime) / 1000;
+    } else if (mode in countModeMap) {
+      const limit = countModeMap[mode];
+      remainingCount = () => limit - wordCount;
+    }
+
     return (
-      <>
-        <span className="text-green-600">{candidate.slice(0, done)}</span>
-        <span className="text-blue-600">{candidate[done] || ""}</span>
-        <span className="text-gray-400">{candidate.slice(done + 1)}</span>
-      </>
+      <TypingText
+        typedText={typedText}
+        romaCandidates={romaCandidates}
+        mode={mode}
+        remainingTime={remainingTime}
+        remainingCount={remainingCount}
+      />
     );
   };
 
@@ -283,6 +321,7 @@ const Typing = () => {
       <div className="space-y-4">
         <div className="text-2xl">Result</div>
         <p>Mode: {modeName}</p>
+        <p>Score: {resultScore.current.toFixed(2)}</p>
         {isTimeBased ? <p>Words: {wordCount}</p> :
           <p>Time: {((Date.now() - countTime) / 1000).toFixed(2)} 秒</p>}
         <p>Speed: {(typed / (Date.now() - countTime) * 1000).toFixed(2)} タイプ/秒</p>
@@ -291,6 +330,9 @@ const Typing = () => {
           setLastSpeed(null);
           setPrevWord(null);
           setPrevRoma(null);
+          setCombo(0);
+          setScorePerKey(1);
+          setScore(0);
           setPhase("start");
         }}>Retry</button>
       </div>)
@@ -333,6 +375,11 @@ const Typing = () => {
                 <p>Speed: {lastSpeed.toFixed(2)} タイプ/秒</p>
               </div>
             )}
+            <div className="fixed bottom-2 left-4 text-sm text-gray-700 text-left">
+              <p>Score: {Math.floor(score)}</p>
+              <p>Combo: {combo}</p>
+              <p>Score/Key: {scorePerKey.toFixed(2)}</p>
+            </div>
         </>
       )}
       {phase === "result" && renderResult()}
