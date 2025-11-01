@@ -333,6 +333,7 @@ const Typing = () => {
           setCombo(0);
           setScorePerKey(1);
           setScore(0);
+          setTyped(0);
           setPhase("start");
         }}>Retry</button>
       </div>)
