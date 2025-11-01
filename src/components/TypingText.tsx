@@ -51,9 +51,9 @@ const TypingCanvas: React.FC<Props> = ({
     ctx.fillStyle = "gray";
     ctx.fillText(rightText, startX + leftWidth + currentWidth + rightWidth / 2, startY);
 
-    const barWidth = width * 0.8;
+    const barWidth = width * 0.4;
     const barHeight = 4;
-    const barX = width * 0.1;
+    const barX = width * 0.3;
     const barY = height - barHeight / 2 - 10;
 
     ctx.fillStyle = "#ccc";
@@ -101,7 +101,7 @@ const TypingCanvas: React.FC<Props> = ({
     <canvas
       ref={canvasRef}
       style={{
-        width: "300px",
+        width: "800px",
         height: "70px",
         display: "block",
         margin: "0 auto",
